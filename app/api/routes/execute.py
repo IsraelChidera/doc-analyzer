@@ -2,7 +2,7 @@ import os
 import tempfile
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile
 from google import genai
 
 load_dotenv(".env.local")
@@ -28,7 +28,7 @@ subject = """
 
 
 @router.post("/execute")
-async def execute(file: UploadFile = File(...)):
+async def execute(file: UploadFile = File(...), scope_question: str = Form(...)):
     suffix = os.path.splitext(file.filename or "")[1]
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(await file.read())
@@ -41,6 +41,7 @@ async def execute(file: UploadFile = File(...)):
             model="gemini-3.8-flash",
             input=[
                 {"type": "text", "text": subject},
+                {"type": "text", "text": scope_question},
                 {"type": "document", "uri": my_file.uri, "mime_type": my_file.mime_type}
             ]
         )
