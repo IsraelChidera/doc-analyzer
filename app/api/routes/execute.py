@@ -4,6 +4,7 @@ import tempfile
 from dotenv import load_dotenv
 from fastapi import APIRouter, File, Form, UploadFile
 from google import genai
+from enum import Enum
 
 load_dotenv(".env.local")
 
@@ -26,9 +27,17 @@ subject = """
             When useful, organize your answer with headings and bullet points.
         """
 
+class ScopeEnum(str, Enum):
+    ANALYSE = "analyse"
+    SUMMARISE = "summarise"
+    EXTRACT = "extract"
+    EXPLAIN = "explain"
+    CLASSIFY = "classify"
+    EVALUATE = "evaluate"
+
 
 @router.post("/execute")
-async def execute(file: UploadFile = File(...), scope_question: str = Form(...)):
+async def execute(file: UploadFile = File(...), scope_name: ScopeEnum = "Analyse"):
     suffix = os.path.splitext(file.filename or "")[1]
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(await file.read())
@@ -41,7 +50,7 @@ async def execute(file: UploadFile = File(...), scope_question: str = Form(...))
             model="gemini-3.8-flash",
             input=[
                 {"type": "text", "text": subject},
-                {"type": "text", "text": scope_question},
+                {"type": "text", "text": scope_name},
                 {"type": "document", "uri": my_file.uri, "mime_type": my_file.mime_type}
             ]
         )
